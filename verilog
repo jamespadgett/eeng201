@@ -1,10 +1,6 @@
 `timescale 1ns / 1ps
 
-module goon(
-    input [2:0] in,
-    input clk,
-    input [3:0] thres,
-    output led
+module goon(input [2:0] in, input clk, input [3:0] thres, output led
     // Uncomment below to hook up 7-segment display
     // , output [6:0] seg, output [3:0] an
 );
@@ -31,13 +27,7 @@ module goon(
 endmodule
 
 
-module acc(
-    input [2:0] in,
-    input slow,
-    input [3:0] prev,
-    input reset,
-    output reg [3:0] acc
-);
+module acc(input [2:0] in, input slow, input [3:0] prev, input reset, output reg [3:0] acc);
     always @(posedge slow or posedge reset) begin
         if (reset)
             acc <= 0;
@@ -47,12 +37,7 @@ module acc(
 endmodule
 
 
-module store(
-    input [3:0] acc,
-    input clk,
-    input reset,
-    output reg [3:0] prev
-);
+module store(input [3:0] acc, input clk, input reset, output reg [3:0] prev);
     always @(negedge clk or posedge reset) begin
         if (reset)
             prev <= 0;
@@ -62,10 +47,7 @@ module store(
 endmodule
 
 
-module clkgen(
-    input wire clk,
-    output wire slow
-);
+module clkgen(input wire clk, output wire slow);
     reg [25:0] count = 0;
     reg tmp_clk = 0;
 
@@ -82,13 +64,7 @@ module clkgen(
 endmodule
 
 
-module comp(
-    input clk,
-    input [3:0] acc,
-    input [3:0] thres,
-    output reg led,
-    output reg reset
-);
+module comp(input clk, input [3:0] acc, input [3:0] thres, output reg led, output reg reset);
     always @(posedge clk) begin
         if (acc > thres) begin
             reset <= 1;
