@@ -1,0 +1,175 @@
+`timescale 1ns / 1ps
+
+// Top-level module connecting everything
+module goon(
+    input [2:0] in,
+    input clk,
+    input [3:0] thres,
+    input btn,
+    input [1:0] op,
+    output reg led,
+    output [6:0] seg,
+    output [3:0] an
+);
+    wire [3:0] prev;
+    wire slow;
+    wire reset_fast;
+    wire reset_slow;
+    wire [3:0] acc_out;
+    wire [7:0] shift_out;
+    wire pulse;
+    wire [3:0] alu_out;
+    wire [3:0] count;
+    wire tick;
+    wire [3:0] thousands, hundreds, tens, ones;
+    wire [3:0] muxed_input;
+    wire [1:0] sel;
+
+    clkgen clk_div(clk, slow);
+    mux m1(1'b1, in, muxed_input); // Always selects in (you can tie this to a switch)
+    acc a1(muxed_input, slow, prev, reset_slow, acc_out);
+    store a2(acc_out, clk, reset_fast, prev);
+    fsm f1(clk, acc_out, led, reset_fast);
+    decoder d1(acc_out, seg);
+    anode_driver an_drv(clk, sel, an);
+    edge_detector ed1(clk, btn, pulse);
+    counter cnt1(clk, reset_fast, count);
+    timer t1(clk, tick);
+    alu alu1(acc_out, count, op, alu_out);
+    shift_register sr1(clk, reset_fast, in[0], shift_out);
+    bcd_converter bcd(acc_out, thousands, hundreds, tens, ones);
+
+    // Synchronize reset
+    reg r1 = 0, r2 = 0;
+    always @(posedge slow) begin
+        r1 <= reset_fast;
+        r2 <= r1;
+    end
+    assign reset_slow = r2;
+
+endmodule
+
+module acc(input [2:0] in, input slow, input [3:0] prev, input reset, output reg [3:0] acc);
+    always @(posedge slow or posedge reset)
+        if (reset) acc <= 0;
+        else acc <= prev + in;
+endmodule
+
+module store(input [3:0] acc, input clk, input reset, output reg [3:0] prev);
+    always @(negedge clk or posedge reset)
+        if (reset) prev <= 0;
+        else prev <= acc;
+endmodule
+
+module clkgen(input wire clk, output wire slow);
+    reg [25:0] count = 0;
+    reg tmp_clk = 0;
+    assign slow = tmp_clk;
+    always @(posedge clk) begin
+        if (count < 25_000_000) count <= count + 1;
+        else begin tmp_clk <= ~tmp_clk; count <= 0; end
+    end
+endmodule
+
+module fsm(input clk, input [3:0] acc, output reg led, output reg reset);
+    reg [1:0] state = 0;
+    always @(posedge clk) begin
+        case (state)
+            0: begin led <= 0; if (acc > 5) state <= 1; end
+            1: begin led <= 1; reset <= 1; state <= 2; end
+            2: begin reset <= 0; state <= 0; end
+        endcase
+    end
+endmodule
+
+module decoder(input [3:0] value, output reg [6:0] seg);
+    always @(*) begin
+        case(value)
+            4'h0: seg = 7'b0000001;
+            4'h1: seg = 7'b1001111;
+            4'h2: seg = 7'b0010010;
+            4'h3: seg = 7'b0000110;
+            4'h4: seg = 7'b1001100;
+            4'h5: seg = 7'b0100100;
+            4'h6: seg = 7'b0100000;
+            4'h7: seg = 7'b0001111;
+            4'h8: seg = 7'b0000000;
+            4'h9: seg = 7'b0000100;
+            4'hA: seg = 7'b0001000;
+            4'hB: seg = 7'b1100000;
+            4'hC: seg = 7'b0110001;
+            4'hD: seg = 7'b1000010;
+            4'hE: seg = 7'b0110000;
+            4'hF: seg = 7'b0111000;
+            default: seg = 7'b1111111;
+        endcase
+    end
+endmodule
+
+module mux(input sel, input [2:0] in, output [2:0] out);
+    assign out = sel ? in : 3'b000;
+endmodule
+
+module anode_driver(input clk, output reg [1:0] sel, output reg [3:0] an);
+    reg [16:0] counter = 0;
+    always @(posedge clk) begin
+        counter <= counter + 1;
+        if (counter == 100_000) begin sel <= sel + 1; counter <= 0; end
+    end
+    always @(*) begin
+        case(sel)
+            0: an = 4'b1110;
+            1: an = 4'b1101;
+            2: an = 4'b1011;
+            3: an = 4'b0111;
+        endcase
+    end
+endmodule
+
+module bcd_converter(input [7:0] binary, output [3:0] thousands, hundreds, tens, ones);
+    assign thousands = 0;
+    assign hundreds  = 0;
+    assign tens      = binary / 10;
+    assign ones      = binary % 10;
+endmodule
+
+module timer(input clk, output reg tick);
+    reg [25:0] count = 0;
+    always @(posedge clk) begin
+        if (count == 50_000_000) begin tick <= ~tick; count <= 0; end
+        else count <= count + 1;
+    end
+endmodule
+
+module counter(input clk, input rst, output reg [3:0] count);
+    always @(posedge clk or posedge rst) begin
+        if (rst) count <= 0;
+        else count <= count + 1;
+    end
+endmodule
+
+module edge_detector(input clk, input sig, output reg pulse);
+    reg sig_d = 0;
+    always @(posedge clk) begin
+        pulse <= (sig & ~sig_d);
+        sig_d <= sig;
+    end
+endmodule
+
+module alu(input [3:0] a, b, input [1:0] op, output reg [3:0] out);
+    always @(*) begin
+        case(op)
+            2'b00: out = a + b;
+            2'b01: out = a - b;
+            2'b10: out = a & b;
+            2'b11: out = a | b;
+        endcase
+    end
+endmodule
+
+module shift_register(input clk, rst, input in_bit, output reg [7:0] out);
+    always @(posedge clk or posedge rst) begin
+        if (rst) out <= 8'b0;
+        else out <= {out[6:0], in_bit};
+    end
+endmodule
