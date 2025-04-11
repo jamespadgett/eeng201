@@ -31,26 +31,26 @@ set_property PACKAGE_PIN U16 [get_ports led]
 set_property IOSTANDARD LVCMOS33 [get_ports led]
 
 ## 7-Segment Display Segments (seg[6:0])
-set_property PACKAGE_PIN W7 [get_ports {seg[0]}]  ; a
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[0]}]
+set_property PACKAGE_PIN W7 [get_ports {seg[6]}]  ; a
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[6]}]
 
-set_property PACKAGE_PIN W6 [get_ports {seg[1]}]  ; b
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[1]}]
+set_property PACKAGE_PIN W6 [get_ports {seg[5]}]  ; b
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[5]}]
 
-set_property PACKAGE_PIN U8 [get_ports {seg[2]}]  ; c
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[2]}]
+set_property PACKAGE_PIN U8 [get_ports {seg[4]}]  ; c
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[4]}]
 
 set_property PACKAGE_PIN V8 [get_ports {seg[3]}]  ; d
 set_property IOSTANDARD LVCMOS33 [get_ports {seg[3]}]
 
-set_property PACKAGE_PIN U5 [get_ports {seg[4]}]  ; e
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[4]}]
+set_property PACKAGE_PIN U5 [get_ports {seg[2]}]  ; e
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[2]}]
 
-set_property PACKAGE_PIN V5 [get_ports {seg[5]}]  ; f
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[5]}]
+set_property PACKAGE_PIN V5 [get_ports {seg[1]}]  ; f
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[1]}]
 
-set_property PACKAGE_PIN U7 [get_ports {seg[6]}]  ; g
-set_property IOSTANDARD LVCMOS33 [get_ports {seg[6]}]
+set_property PACKAGE_PIN U7 [get_ports {seg[0]}]  ; g
+set_property IOSTANDARD LVCMOS33 [get_ports {seg[0]}]
 
 ## 7-Segment Display Anodes (an[3:0]) - only an[0] is enabled
 set_property PACKAGE_PIN U2 [get_ports {an[0]}]
@@ -64,3 +64,4 @@ set_property IOSTANDARD LVCMOS33 [get_ports {an[2]}]
 
 set_property PACKAGE_PIN W4 [get_ports {an[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {an[3]}]
+
