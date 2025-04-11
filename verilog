@@ -1,0 +1,101 @@
+`timescale 1ns / 1ps
+
+module goon(
+    input [2:0] in,
+    input clk,
+    input [3:0] thres,
+    output led
+    // Uncomment below to hook up 7-segment display
+    // , output [6:0] seg, output [3:0] an
+);
+
+    wire [3:0] prev;
+    wire slow;
+    wire reset_fast;         // Reset in clk domain
+    wire reset_slow;         // Synchronized reset for slow domain
+    wire [3:0] acc;
+
+    acc a1(in, slow, prev, reset_slow, acc);
+    store a2(acc, clk, reset_fast, prev);
+    clkgen a3(clk, slow);
+    comp a4(clk, acc, thres, led, reset_fast);
+
+    // Synchronize reset to slow domain
+    reg r1, r2;
+    always @(posedge slow) begin
+        r1 <= reset_fast;
+        r2 <= r1;
+    end
+    assign reset_slow = r2;
+
+endmodule
+
+
+module acc(
+    input [2:0] in,
+    input slow,
+    input [3:0] prev,
+    input reset,
+    output reg [3:0] acc
+);
+    always @(posedge slow or posedge reset) begin
+        if (reset)
+            acc <= 0;
+        else
+            acc <= prev + in;
+    end
+endmodule
+
+
+module store(
+    input [3:0] acc,
+    input clk,
+    input reset,
+    output reg [3:0] prev
+);
+    always @(negedge clk or posedge reset) begin
+        if (reset)
+            prev <= 0;
+        else
+            prev <= acc;
+    end
+endmodule
+
+
+module clkgen(
+    input wire clk,
+    output wire slow
+);
+    reg [25:0] count = 0;
+    reg tmp_clk = 0;
+
+    assign slow = tmp_clk;
+
+    always @(posedge clk) begin
+        if (count < 25_000_000)
+            count <= count + 1;
+        else begin
+            tmp_clk <= ~tmp_clk;
+            count <= 0;
+        end
+    end
+endmodule
+
+
+module comp(
+    input clk,
+    input [3:0] acc,
+    input [3:0] thres,
+    output reg led,
+    output reg reset
+);
+    always @(posedge clk) begin
+        if (acc > thres) begin
+            reset <= 1;
+            led <= 1;
+        end else begin
+            reset <= 0;
+            led <= 0;
+        end
+    end
+endmodule
